@@ -1,0 +1,86 @@
+# Default values for strapi.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+replicaCount: 1
+
+image:
+  repository: strapi/strapi
+  tag: v3.0.0-alpha.14.5
+  pullPolicy: Always
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+service:
+  type: LoadBalancer
+  port: 1337
+
+strapi:
+  appName: strapi-app  
+
+## MongoDB URL if using an externally provisioned MongoDB
+externalMongodbUrl:  # mongodb://user:password@localhost:27017/rocketchat
+externalMongodbOplogUrl:  # mongodb://user:password@localhost:27017/local?replicaSet=rs0&authSource=admin
+
+##
+## MongoDB chart configuration
+### ref https://github.com/helm/charts/tree/master/stable/mongodb#configuration
+##
+mongodb:
+  ## Enable or disable MongoDB dependency completely.
+  enabled: true
+
+  mongodbRootPassword: strapi-pass
+
+  mongodbClient: mongo
+  mongodbUsername: strapi-user
+  mongodbPassword: strapi-pass
+  mongodbDatabase: strapi
+  mongodbHost: localhost
+  mongodbPort: 27017
+  mongodbSsl: false
+  mongodbAuth: strapi
+
+  replicaSet:
+    enabled: true
+    # key:
+
+  persistence:
+    enabled: true
+    ## mongodb data Persistent Volume Storage Class
+    ## If defined, storageClassName: <storageClass>
+    ## If set to "-", storageClassName: "", which disables dynamic provisioning
+    ## If undefined (the default) or set to null, no storageClassName spec is
+    ##   set, choosing the default provisioner.  (gp2 on AWS, standard on
+    ##   GKE, AWS & OpenStack)
+    ##
+    # storageClass: "-"
+    accessMode: ReadWriteOnce
+    size: 8Gi
+
+persistence:
+  enabled: true
+  ## mongodb data Persistent Volume Storage Class
+  ## If defined, storageClassName: <storageClass>
+  ## If set to "-", storageClassName: "", which disables dynamic provisioning
+  ## If undefined (the default) or set to null, no storageClassName spec is
+  ##   set, choosing the default provisioner.  (gp2 on AWS, standard on
+  ##   GKE, AWS & OpenStack)
+  ##
+  # storageClass: "-"
+  accessMode: ReadWriteOnce
+  size: 8Gi
+
+ingress:
+  enabled: false
+  annotations: {}
+  hosts:
+    - host: chart-example.local
+      paths: []
+  tls: []
+resources: {}
+nodeSelector: {}
+tolerations: []
+affinity: {}

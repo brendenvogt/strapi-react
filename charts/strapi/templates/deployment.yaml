@@ -1,0 +1,100 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "strapi.fullname" . }}
+  labels:
+{{ include "strapi.labels" . | indent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "strapi.name" . }}
+      app.kubernetes.io/instance: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: {{ include "strapi.name" . }}
+        app.kubernetes.io/instance: {{ .Release.Name }}
+    spec:
+    {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+      containers:
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          env:
+            - name: APP_NAME
+              value: {{ .Values.strapi.appName  | quote }}
+            - name: DATABASE_CLIENT
+              value: {{ .Values.mongodb.mongodbClient | quote }}
+            - name: DATABASE_HOST
+              value: {{ template "mongodb.fullname" . }}
+            - name: DATABASE_PORT
+              value: {{ .Values.mongodb.mongodbPort | quote }}
+            - name: DATABASE_NAME
+              value: {{ .Values.mongodb.mongodbDatabase | quote }}
+            - name: DATABASE_USERNAME
+              value: {{ .Values.mongodb.mongodbUsername | quote }}
+            - name: DATABASE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  key:  mongo-password
+                  name: {{ template "strapi.fullname" . }}
+            - name: DATABASE_SSL
+              value: {{ .Values.mongodb.mongodbSsl | quote }}
+            - name: DATABASE_AUTHENTICATION_DATABASE
+              value: {{ .Values.mongodb.mongodbAuth | quote }}
+            - name: HOST
+              value: {{ .Values.mongodb.mongodbHost | quote }}
+            - name: MONGO_URL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ template "strapi.fullname" . }}
+                  key: mongo-uri
+            - name: MONGO_OPLOG_URL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ template "strapi.fullname" . }}
+                  key: mongo-oplog-uri
+            - name: MONGO_INITDB_ROOT_USERNAME
+              value: {{ .Values.mongodb.mongodbUsername | quote }}
+            - name: MONGO_INITDB_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  key:  mongo-password
+                  name: {{ template "strapi.fullname" . }}
+          ports:
+            - name: http
+              containerPort: 1337
+              protocol: TCP
+          volumeMounts:
+            - name: {{ template "strapi.fullname" . }}
+              mountPath: /usr/src/api/strapi-app
+          livenessProbe:
+            httpGet:
+              path: /
+              port: http
+          readinessProbe:
+            httpGet:
+              path: /
+              port: http
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      volumes:
+        - name: {{ template "strapi.fullname" . }}
+          persistentVolumeClaim:
+            claimName: {{ template "strapi.fullname" . }}
+    {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+    {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
